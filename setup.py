@@ -14,6 +14,9 @@ setup(
     license = 'BSD License',
     description = 'A Django app to use the information available in http://www.geonames.org',
     long_description = README,
+    install_requires=[
+        "requests>=2.25"
+    ],
     url = 'https://github.com/dablak/django-geonames',
     author = 'Daniel Blasco Calzada',
     author_email = 'projects@dablak.com',

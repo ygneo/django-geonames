@@ -1,16 +1,21 @@
+import zipfile
+import datetime
+import glob
+import os
+import requests
+import shutil
+import sys
+import tempfile
+import traceback
+from urllib.parse import urlparse
 from django.contrib.gis.geos import Point
 from django.core.management.base import BaseCommand
 from django.db import transaction
 from django.db.models import Count
-import traceback
-from geonames.models import Timezone, Language, Country, Currency, Locality, \
-    Admin1Code, Admin2Code, AlternateName, GeonamesUpdate
-import datetime
-import os
-import sys
-import tempfile
-import shutil
-import glob
+
+from geonames.models import Admin1Code, Admin2Code, AlternateName, Country, Currency, GeonamesUpdate, Language, \
+    Locality, Timezone
+
 FILES = [
     'http://download.geonames.org/export/dump/timeZones.txt',
     'http://download.geonames.org/export/dump/iso-languagecodes.txt',
@@ -84,21 +89,19 @@ class Command(BaseCommand):
             os.mkdir(self.temp_dir_path)
         except OSError:
             pass
-        os.chdir(self.temp_dir_path)
         for f in FILES:
             # --timestamping (-N) will overwrite files rather then appending .1, .2 ...
             # see http://stackoverflow.com/a/16840827/913223
-            if os.system('wget --timestamping %s' % f) != 0:
-                print("ERROR fetching %s. Perhaps you are missing the 'wget' utility." % os.path.basename(f))
-                sys.exit(1)
+            print(f"Downloading {f}")
+            response = requests.get(f, allow_redirects=True)
+            open(os.path.join(self.temp_dir_path, os.path.basename(urlparse(f).path)), "wb").write(response.content)
 
     def unzip_files(self):
         os.chdir(self.temp_dir_path)
         print("Unzipping downloaded files as needed: ''." % glob.glob('*.zip'))
         for f in glob.glob('*.zip'):
-            if os.system('unzip -o %s' % f) != 0:
-                print("ERROR unzipping %s. Perhaps you are missing the 'unzip' utility." % f)
-                sys.exit(1)
+            with zipfile.ZipFile(f) as zip_file:
+                zip_file.extractall(self.temp_dir_path)
 
     def cleanup_files(self):
         shutil.rmtree(self.temp_dir_path)
