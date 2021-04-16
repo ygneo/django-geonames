@@ -388,6 +388,7 @@ class Locality(models.Model):
     latitude = models.DecimalField(max_digits=7, decimal_places=2)
     longitude = models.DecimalField(max_digits=7, decimal_places=2)
     point = models.PointField(geography=False)
+    postal_code = models.CharField(max_length=20, db_index=True, blank=True)
     modification_date = models.DateField()
 
 
